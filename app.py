@@ -31,26 +31,22 @@ h1, h2, h3 {
     color: #240F6E;
 }
 
-/* Top header bar */
 header[data-testid="stHeader"] {
     background-color: #240F6E;
 }
 
-/* Chat input */
 div[data-testid="stChatInput"] textarea {
     font-family: 'Open Sans', Arial, sans-serif;
     border: 1.5px solid #240F6E;
     border-radius: 8px;
 }
 
-/* User message bubble */
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
     background-color: #EFEFEF;
     border-radius: 8px;
     padding: 4px;
 }
 
-/* Assistant message bubble */
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
     background-color: #F5F3FB;
     border-left: 4px solid #240F6E;
@@ -58,24 +54,76 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
     padding: 4px;
 }
 
-/* Links in assistant responses */
 a {
     color: #240F6E;
     font-weight: 600;
 }
 
-/* Title */
 div[data-testid="stAppViewBlockContainer"] h1 {
     color: #240F6E;
 }
 
-/* Caption */
 div[data-testid="stCaptionContainer"] p {
     color: #503F8B;
     font-family: 'Open Sans', Arial, sans-serif;
 }
+
+/* Canned prompt buttons */
+div[data-testid="stButton"] button {
+    background-color: #F5F3FB;
+    color: #240F6E;
+    border: 1.5px solid #240F6E;
+    border-radius: 8px;
+    font-family: 'Open Sans', Arial, sans-serif;
+    font-size: 0.85rem;
+    text-align: left;
+    white-space: normal;
+    height: auto;
+    padding: 10px 14px;
+}
+
+div[data-testid="stButton"] button:hover {
+    background-color: #240F6E;
+    color: #FFFFFF;
+    border-color: #240F6E;
+}
 </style>
 """, unsafe_allow_html=True)
+
+TOOLS = [
+    {
+        "name": "Auto Subtitler",
+        "url": "https://autosub.kapteach.com/",
+        "desc": "Add captions & translate Brightcove videos",
+    },
+    {
+        "name": "Frame.io → Smartsheet",
+        "url": "https://frameio-smartsheet-sync-zfakvqtam89uyadhbybmbw.streamlit.app/",
+        "desc": "Sync video assets from Frame.io into Smartsheet",
+    },
+    {
+        "name": "Media Dashboard",
+        "url": "https://media-dashboardgit-xgbe8e2jkyjf49nmaph7fj.streamlit.app/",
+        "desc": "Project overview & AI morning briefing",
+    },
+    {
+        "name": "KitHub",
+        "url": "https://kitpath-hub-213102077280.us-central1.run.app/",
+        "desc": "Equipment check-in/out & kit tracking",
+    },
+    {
+        "name": "PM Agent",
+        "url": "https://kaplan-pm-agent.vercel.app/",
+        "desc": "AI assistant for master build plans",
+    },
+]
+
+with st.sidebar:
+    st.markdown("## Tools")
+    for tool in TOOLS:
+        st.markdown(f"**[{tool['name']}]({tool['url']})**")
+        st.caption(tool["desc"])
+        st.divider()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -83,11 +131,33 @@ if "messages" not in st.session_state:
 st.title("Kaplan Media Consultant")
 st.caption("Tell me what you're working on and I'll point you to the right tool.")
 
+CANNED = [
+    "I need to add subtitles to a video",
+    "I need to sync Frame.io projects to Smartsheet",
+    "Show me a status overview of all media projects",
+    "I need to check out production equipment",
+    "I'm a PM working on a master build plan",
+    "I need to translate a video into another language",
+]
+
+if not st.session_state.messages:
+    st.markdown("**Not sure where to start? Try one of these:**")
+    cols = st.columns(2)
+    for i, msg in enumerate(CANNED):
+        if cols[i % 2].button(msg, use_container_width=True, key=f"canned_{i}"):
+            st.session_state.pending_prompt = msg
+            st.rerun()
+    st.markdown("---")
+
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-if prompt := st.chat_input("What do you need help with?"):
+prompt = st.chat_input("What do you need help with?")
+if "pending_prompt" in st.session_state:
+    prompt = st.session_state.pop("pending_prompt")
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
