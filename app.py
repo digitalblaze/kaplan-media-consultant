@@ -1,13 +1,14 @@
 import os
 import streamlit as st
-from anthropic import Anthropic
+import google.generativeai as genai
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT
 
 load_dotenv()
 
-api_key = os.getenv("ANTHROPIC_API_KEY") or st.secrets.get("ANTHROPIC_API_KEY")
-client = Anthropic(api_key=api_key)
+api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=SYSTEM_PROMPT)
 
 st.set_page_config(
     page_title="Kaplan Media Consultant",
@@ -93,13 +94,16 @@ if prompt := st.chat_input("What do you need help with?"):
 
     with st.chat_message("assistant"):
         with st.spinner(""):
-            response = client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                messages=st.session_state.messages,
-            )
-            reply = response.content[0].text
+            history = [
+                {
+                    "role": "model" if m["role"] == "assistant" else "user",
+                    "parts": [m["content"]],
+                }
+                for m in st.session_state.messages[:-1]
+            ]
+            chat = model.start_chat(history=history)
+            response = chat.send_message(prompt)
+            reply = response.text
             st.markdown(reply)
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
