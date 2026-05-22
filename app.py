@@ -128,6 +128,10 @@ TOOLS = [
 ]
 
 def get_login_url():
+    missing = [k for k, v in {"GOOGLE_CLIENT_ID": CLIENT_ID, "REDIRECT_URI": REDIRECT_URI}.items() if not v]
+    if missing:
+        st.error(f"Missing secrets: {', '.join(missing)}. Check Streamlit Cloud secrets.")
+        st.stop()
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
