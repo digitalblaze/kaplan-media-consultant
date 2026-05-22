@@ -124,6 +124,20 @@ with st.sidebar:
         st.markdown(f"**[{tool['name']}]({tool['url']})**")
         st.caption(tool["desc"])
         st.divider()
+    st.caption(f"Signed in as {st.experimental_user.email}")
+    st.button("Sign out", on_click=st.logout, use_container_width=True)
+
+if not st.experimental_user.is_logged_in:
+    st.title("Kaplan Media Consultant")
+    st.markdown("Sign in with your Kaplan Google account to continue.")
+    st.button("Sign in with Google", on_click=st.login, args=["google"])
+    st.stop()
+
+email = st.experimental_user.email or ""
+if not (email.endswith("@kaplan.com") or email.endswith("@kaplan.edu")):
+    st.error(f"Access is restricted to @kaplan.com and @kaplan.edu accounts. You signed in as **{email}**.")
+    st.button("Sign out", on_click=st.logout)
+    st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
